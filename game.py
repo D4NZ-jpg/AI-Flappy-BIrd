@@ -85,7 +85,7 @@ class Bird:
 
         if self.tilt <= -80:
             self.img = self.bird_img[1]
-            slef.img_num = self.animation_time * 2
+            self.img_num = self.animation_time * 2
 
         rotated_img = pygame.transform.rotate(self.img, self.tilt)
         new_rect = rotated_img.get_rect(center=self.img.get_rect(topleft=(self.x, self.y)).center)
