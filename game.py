@@ -5,8 +5,6 @@ import os
 import random
 import sys
 
-pygame.font.init()
-
 #Loads Images
 bird_img = [
     pygame.image.load(os.path.join("Assets","Bird1.png")),
@@ -17,8 +15,6 @@ bird_img = [
 bg_img = pygame.image.load(os.path.join("Assets","Background.png"))
 Floor_img = pygame.image.load(os.path.join("Assets","Floor.png"))
 pipe_img = pygame.image.load(os.path.join("Assets","Pipe.png"))
-
-font = pygame.font.SysFont("FlappyBirdy.ttf", 25)
 
 #Set Window size depending on the size of the background Image
 win_w = bg_img.get_width()
@@ -96,97 +92,108 @@ class Bird:
 
 #Defines the class for the Pipes
 class Pipe:
-	gap = 90
-	vel = 3
+    gap = 90
+    vel = 3
 
 
-	def __init__(self, x):
-		self.x = x
-		self.height = 0
+    def __init__(self, x):
+        self.x = x
+        self.height = 0
 
-		self.top = 0
-		self.bottom = 0
-		self.Pipe_Top = pygame.transform.flip(pipe_img, False, True)
-		self.Pipe_Bottom = pipe_img
+        self.top = 0
+        self.bottom = 0
+        self.Pipe_Top = pygame.transform.flip(pipe_img, False, True)
+        self.Pipe_Bottom = pipe_img
 
-		self.passed = False
-		self.set_height()
+        self.passed = False
+        self.set_height()
 
-	#Selects a random height for the Pipes
-	def set_height(self):
-		self.height = random.randrange(192,320)
-		self.top = self.height - self.Pipe_Top.get_height()
-		self.bottom = self.height + self.gap
+    #Selects a random height for the Pipes
+    def set_height(self):
+        self.height = random.randrange(192,320)
+        self.top = self.height - self.Pipe_Top.get_height()
+        self.bottom = self.height + self.gap
 
-	#Moves the pipes
-	def Move(self):
-		self.x -= self.vel
+    #Moves the pipes
+    def Move(self):
+        self.x -= self.vel
 
-	#Draws the Pipes in the correct positions
-	def Draw(self, win):
-		win.blit(self.Pipe_Top, (self.x, self.top))
-		win.blit(self.Pipe_Bottom, (self.x, self.bottom))
+    #Draws the Pipes in the correct positions
+    def Draw(self, win):
+        win.blit(self.Pipe_Top, (self.x, self.top))
+        win.blit(self.Pipe_Bottom, (self.x, self.bottom))
 
-	#Detects pixel perfect Collitions
-	def Collition(self, bird):
-		bird_mask = bird.get_mask()
-		top_mask = pygame.mask.from_surface(self.Pipe_Top)
-		bottom_mask = pygame.mask.from_surface(self.Pipe_Bottom)
+    #Detects pixel perfect Collitions
+    def Collition(self, bird):
+        bird_mask = bird.get_mask()
+        top_mask = pygame.mask.from_surface(self.Pipe_Top)
+        bottom_mask = pygame.mask.from_surface(self.Pipe_Bottom)
 
-		top_offset = (int(self.x - bird.x), int(self.top - round(bird.y)))		 
-		bottom_offset = (int(self.x - bird.x), int(self.bottom - round(bird.y)))
+        top_offset = (int(self.x - bird.x), int(self.top - round(bird.y)))         
+        bottom_offset = (int(self.x - bird.x), int(self.bottom - round(bird.y)))
 
-		b_point = bird_mask.overlap(bottom_mask, bottom_offset)
-		t_point = bird_mask.overlap(top_mask, top_offset)
+        b_point = bird_mask.overlap(bottom_mask, bottom_offset)
+        t_point = bird_mask.overlap(top_mask, top_offset)
 
-		if b_point or t_point:
-			return True
+        if b_point or t_point:
+            return True
 
-		return False
+        return False
 
 #Define the class for the Floor
 class Floor:
-	vel = 3
-	width = Floor_img.get_width()
-	img = Floor_img
+    vel = 3
+    width = Floor_img.get_width()
+    img = Floor_img
 
-	def __init__(self, y):
-		self.y = y
-		self.x1 = 0
-		self.x2 = self.width
+    def __init__(self, y):
+        self.y = y
+        self.x1 = 0
+        self.x2 = self.width
 
-	#Makes the Images for the floor Loop
-	def Move(self):
-		self.x1 -= self.vel
-		self.x2 -= self.vel
+    #Makes the Images for the floor Loop
+    def Move(self):
+        self.x1 -= self.vel
+        self.x2 -= self.vel
 
-		if self.x1 + self.width < 0:
-			self.x1 = self.x2 + self.width
+        if self.x1 + self.width < 0:
+            self.x1 = self.x2 + self.width
 
-		if self.x2 + self.width < 0:
-			self.x2 = self.x1 + self.width
+        if self.x2 + self.width < 0:
+            self.x2 = self.x1 + self.width
 
-	#Draws the Floors in their positions
-	def Draw(self, win):
-		win.blit(self.img, (self.x1, self.y))
-		win.blit(self.img, (self.x2, self.y))
+    #Draws the Floors in their positions
+    def Draw(self, win):
+        win.blit(self.img, (self.x1, self.y))
+        win.blit(self.img, (self.x2, self.y))
 
 #Draws the window of the game
-def draw_win(win, bird, pipes, floor, score):
+def draw_win(win, birds, pipes, floor, score):
     win.blit(bg_img, (0,0))
-    bird.Draw(win)
+
+    for bird in birds:
+        bird.Draw(win)
 
     for pipe in pipes:
-    	pipe.Draw(win)
+        pipe.Draw(win)
 
-    text = font.render("Score: "+ str(score), 1, (255,255,255))
-    win.blit(text, (win_w - 10 - text.get_width(), 10))
     floor.Draw(win)
     pygame.display.update()
 
 #The main Loop
-def main():
-    bird = Bird(win_w/4,win_h/2)
+def main(genomes, config):
+    nets = []
+    ge = []
+    birds = []
+
+    for _,g in genomes:
+        net = neat.nn.FeedForwardNetwork.create(g, config)
+        nets.append(net)
+        birds.append(Bird(win_w/4, win_h/2))
+        g.fitness = 0        
+        ge.append(g)
+
+
     floor = Floor(480)
     pipes = [Pipe(350)]
     win = pygame.display.set_mode((win_w, win_h))
@@ -199,43 +206,98 @@ def main():
         #Checks to Close Window
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
+                pygame.quit()
+                quit()
             if event.type == pygame.KEYDOWN:
-            	if event.key == pygame.K_SPACE:	
-            		bird.Jump()	
+                if event.key == pygame.K_SPACE:    
+                    bird.Jump()    
+
+
+        pipe_ind = 0
+        if len(birds) > 0:
+            if len(pipes) > 0 and birds[0].x > pipes[0].Pipe_Top.get_height():
+                pipe_ind = 1
+        else:
+            run = False
+
+
+        for x , bird in enumerate(birds):
+            bird.Move()
+            ge[x].fitness +=0.1
+
+            output = nets[x].activate((bird.y, abs(bird.y-pipes[pipe_ind].height), abs(bird.y-pipes[pipe_ind].bottom)))
+
+            if output[0] > 0.5:
+                bird.Jump()
+
 
         bird.Move()
         New_Pipe = False
         removed = []
+
+
         for pipe in pipes:
-        	#Detects Collitions of Pipes with Bird
-        	if pipe.Collition(bird):
-        		run = False
+            for x, bird in enumerate(birds):
+                #Detects Collitions of Pipes with Bird
+                if pipe.Collition(bird):
+                    ge[x].fitness -=1
+                    birds.pop(x)
+                    nets.pop(x)
+                    ge.pop(x)
 
-        	#Detects if the pipe is outside the screen
-        	if pipe.x + pipe.Pipe_Top.get_width() < 0:
-        		removed.append(pipe)
+                #Checks if the Pipe have been Passed
+                if not pipe.passed and pipe.x < bird.x:
+                    pipe.passed = True
+                    New_Pipe = True
 
-        	#Checks if the Pipe have been Passed
-        	if not pipe.passed and pipe.x < bird.x:
-        		pipe.passed = True
-        		New_Pipe = True
+            #Detects if the pipe is outside the screen
+            if pipe.x + pipe.Pipe_Top.get_width() < 0:
+                removed.append(pipe)
 
-        	pipe.Move()
+            pipe.Move()
+
 
         if New_Pipe:
-        	score +=1
-        	pipes.append(Pipe(288))
+            score +=1
+            for g in ge:
+                g.fitness += 5
+            pipes.append(Pipe(288))
+
 
         for remove in removed:
-        	pipes.remove(remove)
+            pipes.remove(remove)
+
 
         floor.Move()
-        draw_win(win,bird, pipes, floor, score)
+        draw_win(win,birds, pipes, floor, score)
 
-        if bird.y + bird.img.get_height() >= floor.y:
-        	run = False
+
+        #Checks if hit Ground
+        for x, bird in enumerate(birds):
+            if bird.y + bird.img.get_height() >= floor.y or bird.y < 0:
+                birds.pop(x)
+                nets.pop(x)
+                ge.pop(x)
 
     pygame.quit()
 
-main()
+def run(config_path):
+
+    #Loads configuration
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, 
+        neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
+
+    #Defines the population
+    p = neat.Population(config)
+
+    #Prints information about the generation and the AI
+    p.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    p.add_reporter(stats)
+
+    winner = p.run(main,50)
+
+if __name__ == "__main__":
+    local_dir = os.path.dirname(__file__)
+    config_path = os.path.join(local_dir, "config-feedforward.txt")
+    run(config_path)
